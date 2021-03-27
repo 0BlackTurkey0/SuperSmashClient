@@ -1,12 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour {
 
     public int ID;
     public string Name;
     public int KnockBackPoint;
+    public int DeathCount;
+    public bool Controlled;
+    public GameObject canvas;
+    public Text deathMSG;
 
     public float Invincible;
 
@@ -129,11 +134,28 @@ public class Player : MonoBehaviour {
         }
     }
 
+    public IEnumerator Respawn() {
+        for (int i = 0; i < 3; i++) {
+            int tmp = 2-i;
+            deathMSG.text = "Death...\nRespawn in " + tmp.ToString() + "s";
+            yield return new WaitForSeconds(1f);
+        }
+        deathMSG.gameObject.SetActive(false);
+        hitRecover = 0f;
+        Invincible = 0f;
+        playerRigidbody2D.gravityScale = 1f;
+        transform.position = new Vector3(0f, 0f, 1f);
+    }
+
     void Start() {
         playerCollider2D = GetComponent<Collider2D>();
         playerRigidbody2D = GetComponent<Rigidbody2D>();
         playerSpriteRenderer = GetComponent<SpriteRenderer>();
         playerAnimator = GetComponent<Animator>();
+        canvas = GameObject.Find("Canvas");
+        deathMSG = canvas.transform.GetChild(0).gameObject.GetComponent<Text>();
+        Controlled = false;
+        DeathCount = 0;
         Invincible = 0f;
         DoJump = false;
         DoMovement = false;
@@ -148,7 +170,6 @@ public class Player : MonoBehaviour {
     }
 
     void Update() {
-        transform.position = pos;
         if (Invincible > 0f) {
             if (Invincible - Time.deltaTime > 0f)
                 Invincible -= Time.deltaTime;
@@ -173,10 +194,26 @@ public class Player : MonoBehaviour {
             else
                 hitRecover = 0f;
         }
+        transform.position = pos;
     }
 
     void FixedUpdate() {
         Movement();
         Jump();
+    }
+
+    void OnTriggerEnter2D(Collider2D collision) {
+        if (collision.gameObject.layer == 11) {
+            if (Controlled) {
+                deathMSG.text = "Death...\nRespawn in 3.0s";
+                deathMSG.gameObject.SetActive(true);
+            }
+            DeathCount++;
+            hitRecover = 5f;
+            Invincible = 5f;
+            playerRigidbody2D.gravityScale = 0f;
+            playerRigidbody2D.velocity = new Vector2(0f, 0f);
+            StartCoroutine(Respawn());
+        }
     }
 }

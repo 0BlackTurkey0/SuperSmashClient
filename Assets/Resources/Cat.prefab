@@ -120,6 +120,11 @@ MonoBehaviour:
   ID: -1
   Name: Player
   KnockBackPoint: 0
+  DeathCount: 0
+  Controlled: 0
+  canvas: {fileID: 0}
+  deathMSG: {fileID: 0}
+  Invincible: 0
   moveRight: 0
   moveLeft: 0
   jump: 0
@@ -127,11 +132,7 @@ MonoBehaviour:
   heavyATK: 0
   dodge: 0
   hitRecover: 0
-  playerCollider2D: {fileID: 0}
-  playerRigidbody2D: {fileID: 50755183913182946}
-  playerSpriteRenderer: {fileID: 212580125152261848}
-  playerAnimator: {fileID: 95848887548469192}
-  horizontalDirection: 0
+  pos: {x: 0, y: 0, z: 0}
   speedX: 1.5
   forceY: 150
   MaxJumpCount: 3
@@ -139,7 +140,12 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 512
+  playerCollider2D: {fileID: 0}
+  playerRigidbody2D: {fileID: 0}
+  playerSpriteRenderer: {fileID: 0}
+  playerAnimator: {fileID: 0}
   grounded: 0
+  horizontalDirection: 0
 --- !u!212 &212580125152261848
 SpriteRenderer:
   m_ObjectHideFlags: 1

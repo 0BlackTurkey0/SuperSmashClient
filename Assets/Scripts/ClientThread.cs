@@ -59,12 +59,10 @@ public class ClientThread : MonoBehaviour {
         String receiveMSG = new String(chars);
         String[] Message = receiveMSG.Split(' ');
         int ctr = 2;
-        if (players[0].ID == -1)
+        if (players[0].ID == -1) {
             players[0].ID = int.Parse(Message[0]);
-        /*
-        ADD A FUNCTION OF DESTROYING DISCONNECTED CLIENT GAMEOBJECT WITH SERVER SOCKET SEND!!
-        UNFINISHED!!!!!!!!!!!!!!!!!!
-        */
+            players[0].Controlled = true;
+        }
         for (int i = 0; i < int.Parse(Message[1]); i++) {
             Player Target = players.Find(x => x.ID == int.Parse(Message[ctr]));
             if (Target == null) {
