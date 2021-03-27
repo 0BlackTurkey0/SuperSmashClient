@@ -15,15 +15,7 @@ public class Player : MonoBehaviour {
     public bool lightATK, heavyATK;
     public bool dodge;
     public float hitRecover;
-
-
-    public Collider2D playerCollider2D;
-    public Rigidbody2D playerRigidbody2D;
-    public SpriteRenderer playerSpriteRenderer;
-    public Animator playerAnimator;
-
-    private bool DoJump, DoMovement;
-    public int horizontalDirection;
+    public Vector3 pos;
 
     [Header("水平速度")]
     [Range(0, 2)]
@@ -42,12 +34,19 @@ public class Player : MonoBehaviour {
     [Header("地面圖層")]
     public LayerMask groundLayer;
 
+    public Collider2D playerCollider2D;
+    public Rigidbody2D playerRigidbody2D;
+    public SpriteRenderer playerSpriteRenderer;
+    public Animator playerAnimator;
     public bool grounded;
 
+    private bool DoJump, DoMovement;
+    public int horizontalDirection;
+
     public void InputJump() {
-        if (Input.GetKeyDown(KeyCode.Space)) {
+        if (jump)
             DoJump = true;
-        }
+        jump = false;
     }
 
     public void Jump() {
@@ -71,11 +70,12 @@ public class Player : MonoBehaviour {
     }
 
     public void InputMovement() {
-        horizontalDirection = 0;
-        if (Input.GetKey(KeyCode.D) && !Input.GetKey(KeyCode.A))
+        if (moveRight && !moveLeft)
             horizontalDirection = 1;
-        if (Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.D))
+        else if (moveLeft && !moveRight)
             horizontalDirection = -1;
+        moveRight = false;
+        moveLeft = false;
         if (horizontalDirection != 0) {
             DoMovement = true;
             playerAnimator.SetInteger("Status", 1);
@@ -102,7 +102,7 @@ public class Player : MonoBehaviour {
             Offset = -0.03f;
         else
             Offset = 0.03f;
-        if (Input.GetMouseButtonDown(0)) {
+        if (lightATK) {
             lightATK = false;
             GameObject Claw = Instantiate(Resources.Load("Claw") as GameObject, new Vector3(transform.position.x + Offset, transform.position.y, 1), Quaternion.identity);
             if (playerSpriteRenderer.flipX)
@@ -111,7 +111,7 @@ public class Player : MonoBehaviour {
             Physics2D.IgnoreCollision(playerCollider2D, clawCollider2D, true);
             hitRecover = 0.3f;
         }
-        else if (Input.GetMouseButtonDown(1)) {
+        else if (heavyATK) {
             heavyATK = false;
             hitRecover = 0.8f;
         }
@@ -128,7 +128,6 @@ public class Player : MonoBehaviour {
             playerRigidbody2D.AddForce(dir * KnockBackPoint);
         }
     }
-
 
     void Start() {
         playerCollider2D = GetComponent<Collider2D>();
@@ -148,23 +147,21 @@ public class Player : MonoBehaviour {
         hitRecover = 0f;
     }
 
-    void Update()
-    {
+    void Update() {
+        transform.position = pos;
         if (Invincible > 0f) {
             if (Invincible - Time.deltaTime > 0f)
                 Invincible -= Time.deltaTime;
             else
                 Invincible = 0f;
         }
-        if (hitRecover == 0f)
-        {
+        if (hitRecover == 0f) {
             InputMovement();
             InputJump();
             Attack();
             Dodge();
         }
-        else
-        {
+        else {
             moveRight = false;
             moveLeft = false;
             jump = false;

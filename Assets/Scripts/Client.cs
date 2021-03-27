@@ -15,7 +15,8 @@ public class Client : MonoBehaviour {
 	
 	void Update() {
         clientThread.Send();
-	}
+        clientThread.Receive();
+    }
 
     void OnApplicationQuit() {
         clientThread.StopConnect();
