@@ -3,8 +3,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ClientThread : MonoBehaviour {
     
@@ -14,13 +16,32 @@ public class ClientThread : MonoBehaviour {
     private Thread connectThread, receiveThread;
     private List<Player> players;
     private int playerCount;
+    public bool connected, init;
+    
+    public GameObject canvas;
+    public InputField input;
+
+    void Awake() {
+        init = false;
+        connected = false;
+    }
 
     void Start() {
         players = new List<Player>();
+        canvas = GameObject.Find("Canvas");
+        input = canvas.transform.GetChild(1).gameObject.GetComponent<InputField>();
         GameObject Cat = Instantiate(Resources.Load("Cat") as GameObject, new Vector3(0, 0, 1), Quaternion.identity);
         players.Add(Cat.GetComponent<Player>());
         playerCount = 1;
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    }
+
+    void Update() {
+        if (init) {
+            input.gameObject.SetActive(false);
+            players[0].playerRigidbody2D.gravityScale = 1f;
+            init = false;
+        }
     }
 
     public void StartConnect() {
@@ -32,6 +53,8 @@ public class ClientThread : MonoBehaviour {
 
     private void Connect() {
         clientSocket.Connect(IPAddress.Parse(ip), port);
+        connected = true;
+        init = true;
     }
 
     public void StopConnect() {
@@ -42,8 +65,7 @@ public class ClientThread : MonoBehaviour {
         if (receiveThread != null && receiveThread.IsAlive)
             return;
         else {
-            receiveThread = new Thread(ReceiveData)
-            {
+            receiveThread = new Thread(ReceiveData) {
                 IsBackground = true
             };
             receiveThread.Start();
@@ -51,7 +73,7 @@ public class ClientThread : MonoBehaviour {
     }
 
     private void ReceiveData() {
-        byte[] data = new byte[1024];
+        byte[] data = new byte[4096];
         int len = clientSocket.Receive(data);
         char[] chars = new char[len];
         Decoder decoder = Encoding.ASCII.GetDecoder();
@@ -66,51 +88,48 @@ public class ClientThread : MonoBehaviour {
         for (int i = 0; i < int.Parse(Message[1]); i++) {
             Player Target = players.Find(x => x.ID == int.Parse(Message[ctr]));
             if (Target == null) {
-                GameObject Cat = Instantiate(Resources.Load("Cat") as GameObject, new Vector3(0, 0, 1), Quaternion.identity);
-                Player player = Cat.GetComponent<Player>();
-                players.Add(player);
-                player.ID = int.Parse(Message[ctr]);
-                player.Name = "Player" + Message[ctr];
-                playerCount++;
+                StartCoroutine(CreateCat(Message[ctr]));
             }
-            Target.pos = new Vector3(float.Parse(Message[ctr+1]), float.Parse(Message[ctr+2]), 1f);
-            int num = int.Parse(Message[ctr+3]);
-            for (int j = ctr+4; j < ctr+num+4; j++) {
-                switch (Message[j]) {
-                    case "Move_Right":
-                        Target.moveRight = true;
-                        break;
+            else {
+                Target.pos = new Vector3(float.Parse(Message[ctr + 1]), float.Parse(Message[ctr + 2]), 1f);
+                int num = int.Parse(Message[ctr + 3]);
+                for (int j = ctr + 4; j < ctr + num + 4; j++) {
+                    switch (Message[j]) {
+                        case "Move_Right":
+                            Target.moveRight = true;
+                            break;
 
-                    case "Move_Left":
-                        Target.moveLeft = true;
-                        break;
+                        case "Move_Left":
+                            Target.moveLeft = true;
+                            break;
 
-                    case "Jump":
-                        Target.jump = true;
-                        break;
+                        case "Jump":
+                            Target.jump = true;
+                            break;
 
-                    case "Light_Attack":
-                        Target.lightATK = true;
-                        break;
+                        case "Light_Attack":
+                            Target.lightATK = true;
+                            break;
 
-                    case "Heavy_Attack":
-                        Target.heavyATK = true;
-                        break;
+                        case "Heavy_Attack":
+                            Target.heavyATK = true;
+                            break;
 
-                    case "Dodge":
-                        Target.dodge = true;
-                        break;
+                        case "Dodge":
+                            Target.dodge = true;
+                            break;
 
-                    case "Destroy":
-                        players.Remove(Target);
-                        Destroy(Target.gameObject);
-                        break;
+                        case "Destroy":
+                            players.Remove(Target);
+                            Destroy(Target.gameObject);
+                            break;
 
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
                 }
+                ctr += (num + 4);
             }
-            ctr += (num+4);
         }
     }
 
@@ -124,6 +143,23 @@ public class ClientThread : MonoBehaviour {
             sendMSG += "Jump ";
         if (Input.GetMouseButtonDown(0))
             sendMSG += "Light_Attack ";
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+            sendMSG += "Dodge ";
         clientSocket.Send(Encoding.ASCII.GetBytes(sendMSG));
+    }
+
+    public IEnumerator CreateCat(string id) {
+        GameObject Cat = Instantiate(Resources.Load("Cat") as GameObject, new Vector3(0, 0, 1), Quaternion.identity);
+        Player player = Cat.GetComponent<Player>();
+        players.Add(player);
+        player.ID = int.Parse(id);
+        player.Name = "Player" + id;
+        playerCount++;
+        yield return null;
+    }
+
+    public void InputIP(string ip) {
+        this.ip = ip;
+        StartConnect();
     }
 }

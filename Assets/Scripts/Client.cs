@@ -10,12 +10,13 @@ public class Client : MonoBehaviour {
     void Start() {
         Application.runInBackground = true;
         clientThread = GetComponent<ClientThread>();
-        clientThread.StartConnect();
 	}
 	
 	void Update() {
-        clientThread.Send();
-        clientThread.Receive();
+        if (clientThread.connected) {
+            clientThread.Send();
+            clientThread.Receive();
+        }
     }
 
     void OnApplicationQuit() {
