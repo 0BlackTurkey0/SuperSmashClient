@@ -10,6 +10,7 @@ public class Player : MonoBehaviour {
     public int KnockBackPoint;
     public int DeathCount;
     public bool Controlled;
+    public bool dead;
     public GameObject canvas;
     public Text deathMSG;
 
@@ -150,7 +151,7 @@ public class Player : MonoBehaviour {
         if (Controlled) {
             for (int i = 0; i < 3; i++) {
                 int tmp = 2 - i;
-                deathMSG.text = "Death...\nRespawn in " + tmp.ToString() + "s";
+                deathMSG.text = "Death - " + DeathCount.ToString() + "...\nRespawn in " + tmp.ToString() + "s";
                 yield return new WaitForSeconds(1f);
             }
             deathMSG.gameObject.SetActive(false);
@@ -158,6 +159,7 @@ public class Player : MonoBehaviour {
         hitRecover = 0f;
         playerRigidbody2D.gravityScale = 1f;
         transform.position = new Vector3(0f, 0f, 1f);
+        dead = false;
     }
 
     void Start() {
@@ -169,6 +171,7 @@ public class Player : MonoBehaviour {
         deathMSG = canvas.transform.GetChild(0).gameObject.GetComponent<Text>();
         playerRigidbody2D.gravityScale = 0f;
         Controlled = false;
+        dead = false;
         DeathCount = 0;
         Invincible = 0f;
         dodgeCD = 0f;
@@ -230,11 +233,12 @@ public class Player : MonoBehaviour {
     }
 
     void OnTriggerEnter2D(Collider2D collision) {
-        if (collision.gameObject.layer == 11) {
+        if (collision.gameObject.layer == 11 && !dead) {
             if (Controlled) {
-                deathMSG.text = "Death...\nRespawn in 3.0s";
+                deathMSG.text = "Death - " + DeathCount.ToString() + "...\nRespawn in 3.0s";
                 deathMSG.gameObject.SetActive(true);
             }
+            dead = true;
             DeathCount++;
             hitRecover = 5f;
             Invincible = 5f;
